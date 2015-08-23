@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
+
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <title>Litheng.GitHub.io by litheng</title>
+  </head>
+
+  <body>
+    <header>
+      <div class="inner">
+        <h1>Litheng.GitHub.io</h1>
+        <h2>GitHub Pages</h2>
+        <a href="https://github.com/litheng" class="button"><small>Follow me on</small> GitHub</a>
+      </div>
+    </header>
+
+    <div id="content-wrapper">
+      <div class="inner clearfix">
+        <section id="main-content">
+          <h1>
+<a id="practical-machine-learning-project" class="anchor" href="#practical-machine-learning-project" aria-hidden="true"><span class="octicon octicon-link"></span></a>Practical Machine Learning Project</h1>
+
+<p>by CLT  </p>
+
+<h3>
+<a id="preparing-r-environment" class="anchor" href="#preparing-r-environment" aria-hidden="true"><span class="octicon octicon-link"></span></a>Preparing R environment</h3>
+
+<pre><code>## Loading required package: lattice
+## Loading required package: ggplot2
+## Loading required package: RGtk2
+## Rattle: A free graphical interface for data mining with R.
+## Version 3.5.0 Copyright (c) 2006-2015 Togaware Pty Ltd.
+## Type 'rattle()' to shake, rattle, and roll your data.
+</code></pre>
+
+<h2>
+<a id="executive-summary" class="anchor" href="#executive-summary" aria-hidden="true"><span class="octicon octicon-link"></span></a>Executive Summary</h2>
+
+<p>The purpose of this project is to build a model to predict the manner in which a group of enthusiasts exercise.  The group uses devices such as Jawbone Up, Nike FuelBand, and Fitbit to collect data about personal activity.  In this project, only data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants will be used.  They were asked to perform barbell lifts correctly and incorrectly in 5 different ways.  More information is available from the website here: <a href="http://groupware.les.inf.puc-rio.br/har">http://groupware.les.inf.puc-rio.br/har</a> (see the section on the Weight Lifting Exercise Dataset). </p>
+
+<h2>
+<a id="loading-and-preprocessing-data" class="anchor" href="#loading-and-preprocessing-data" aria-hidden="true"><span class="octicon octicon-link"></span></a>Loading and Preprocessing Data</h2>
+
+<p>We first download the training and testing data files and then preprocess them.</p>
+
+<div class="highlight highlight-r"><pre><span class="pl-c"># downloading data files and store them into training and testing datasets</span>
+<span class="pl-smi">trainingUrl</span> <span class="pl-k">&lt;-</span> <span class="pl-s"><span class="pl-pds">"</span>https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv<span class="pl-pds">"</span></span>
+<span class="pl-smi">training</span> <span class="pl-k">&lt;-</span> read.csv(<span class="pl-smi">trainingUrl</span>, <span class="pl-v">na.strings</span><span class="pl-k">=</span>c(<span class="pl-s"><span class="pl-pds">"</span>NA<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>#DIV/0!<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>))
+
+<span class="pl-smi">testingUrl</span> <span class="pl-k">&lt;-</span> <span class="pl-s"><span class="pl-pds">"</span>https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv<span class="pl-pds">"</span></span>
+<span class="pl-smi">testing</span> <span class="pl-k">&lt;-</span> read.csv(<span class="pl-smi">testingUrl</span>, <span class="pl-v">na.strings</span><span class="pl-k">=</span>c(<span class="pl-s"><span class="pl-pds">"</span>NA<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>#DIV/0!<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>))
+
+
+<span class="pl-c"># remove id columns</span>
+<span class="pl-smi">training</span> <span class="pl-k">&lt;-</span> <span class="pl-smi">training</span>[,<span class="pl-k">-</span>c(<span class="pl-c1">1</span>)]
+<span class="pl-smi">testing</span> <span class="pl-k">&lt;-</span> <span class="pl-smi">testing</span>[,<span class="pl-k">-</span>c(<span class="pl-c1">1</span>,<span class="pl-c1">160</span>)]
+
+
+<span class="pl-c"># remove predictor columns with mostly NA values</span>
+<span class="pl-smi">na_col</span> <span class="pl-k">&lt;-</span> which(colSums(is.na(<span class="pl-smi">training</span>))<span class="pl-k">&gt;</span><span class="pl-c1">19000</span>)
+<span class="pl-smi">training</span> <span class="pl-k">&lt;-</span> <span class="pl-smi">training</span>[,<span class="pl-k">-</span><span class="pl-smi">na_col</span>]
+<span class="pl-smi">testing</span> <span class="pl-k">&lt;-</span> <span class="pl-smi">testing</span>[,<span class="pl-k">-</span><span class="pl-smi">na_col</span>]
+
+
+<span class="pl-c"># remove predictor columns with near zero variance</span>
+<span class="pl-smi">nzv_col</span> <span class="pl-k">&lt;-</span> nearZeroVar(<span class="pl-smi">training</span>)
+<span class="pl-smi">training</span> <span class="pl-k">&lt;-</span> <span class="pl-smi">training</span>[,<span class="pl-k">-</span><span class="pl-smi">nzv_col</span>]
+<span class="pl-smi">testing</span> <span class="pl-k">&lt;-</span> <span class="pl-smi">testing</span>[,<span class="pl-k">-</span><span class="pl-smi">nzv_col</span>]</pre></div>
+
+<h2>
+<a id="split-training-dataset" class="anchor" href="#split-training-dataset" aria-hidden="true"><span class="octicon octicon-link"></span></a>Split Training Dataset</h2>
+
+<p>The downloaded training dataset is then split into 2 sets.  One set to be used to build the model and the other set for cross validation of the model.</p>
+
+<div class="highlight highlight-r"><pre><span class="pl-c"># splitting training data into 2 sets for training and validation</span>
+set.seed(<span class="pl-c1">123</span>)
+<span class="pl-smi">inTrain</span> <span class="pl-k">&lt;-</span> createDataPartition(<span class="pl-smi">training</span><span class="pl-k">$</span><span class="pl-smi">classe</span>, <span class="pl-v">p</span><span class="pl-k">=</span><span class="pl-c1">0.6</span>, <span class="pl-v">list</span><span class="pl-k">=</span><span class="pl-c1">FALSE</span>)
+<span class="pl-smi">fitTrain</span> <span class="pl-k">&lt;-</span> <span class="pl-smi">training</span>[<span class="pl-smi">inTrain</span>,]
+<span class="pl-smi">validateTrain</span> <span class="pl-k">&lt;-</span> <span class="pl-smi">training</span>[<span class="pl-k">-</span><span class="pl-smi">inTrain</span>,]</pre></div>
+
+<h2>
+<a id="create-decision-tree-model" class="anchor" href="#create-decision-tree-model" aria-hidden="true"><span class="octicon octicon-link"></span></a>Create Decision Tree Model</h2>
+
+<p>We first build a decision tree model using the fitTrain dataset.</p>
+
+<div class="highlight highlight-r"><pre><span class="pl-c"># building a decision tree model based on the new training dataset</span>
+<span class="pl-smi">ctrl</span> <span class="pl-k">&lt;-</span> trainControl(<span class="pl-v">method</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span>cv<span class="pl-pds">"</span></span>)
+<span class="pl-smi">prep</span> <span class="pl-k">&lt;-</span> c(<span class="pl-s"><span class="pl-pds">"</span>center<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>scale<span class="pl-pds">"</span></span>)
+<span class="pl-smi">modFit1</span> <span class="pl-k">&lt;-</span> train(<span class="pl-smi">fitTrain</span><span class="pl-k">$</span><span class="pl-smi">classe</span><span class="pl-k">~</span>., <span class="pl-v">method</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span>rpart<span class="pl-pds">"</span></span>, <span class="pl-v">data</span><span class="pl-k">=</span><span class="pl-smi">fitTrain</span>, <span class="pl-v">trControl</span><span class="pl-k">=</span><span class="pl-smi">ctrl</span>, <span class="pl-v">preProcess</span><span class="pl-k">=</span><span class="pl-smi">prep</span>)
+print(<span class="pl-smi">modFit1</span><span class="pl-k">$</span><span class="pl-smi">finalModel</span>)</pre></div>
+
+<pre><code>## n= 11776 
+## 
+## node), split, n, loss, yval, (yprob)
+##       * denotes terminal node
+## 
+##    1) root 11776 8428 A (0.28 0.19 0.17 0.16 0.18)  
+##      2) roll_belt&lt; 1.051305 10776 7434 A (0.31 0.21 0.19 0.18 0.11)  
+##        4) pitch_forearm&lt; -1.585983 956    7 A (0.99 0.0073 0 0 0) *
+##        5) pitch_forearm&gt;=-1.585983 9820 7427 A (0.24 0.23 0.21 0.2 0.12)  
+##         10) cvtd_timestamp02/12/2011 13:33&gt;=1.707696 801  220 A (0.73 0.27 0 0 0) *
+##         11) cvtd_timestamp02/12/2011 13:33&lt; 1.707696 9019 6965 C (0.2 0.23 0.23 0.21 0.13)  
+##           22) magnet_dumbbell_z&lt; -1.000801 1104  447 A (0.6 0.28 0.043 0.058 0.023) *
+##           23) magnet_dumbbell_z&gt;=-1.000801 7915 5908 C (0.15 0.22 0.25 0.24 0.14)  
+##             46) raw_timestamp_part_1&lt; -1.64389 326    0 A (1 0 0 0 0) *
+##             47) raw_timestamp_part_1&gt;=-1.64389 7589 5582 C (0.11 0.23 0.26 0.25 0.15)  
+##               94) raw_timestamp_part_1&lt; -1.643773 373    6 B (0.013 0.98 0.0027 0 0) *
+##               95) raw_timestamp_part_1&gt;=-1.643773 7216 5210 C (0.11 0.19 0.28 0.26 0.16)  
+##                190) cvtd_timestamp02/12/2011 14:57&gt;=1.684363 326    0 B (0 1 0 0 0) *
+##                191) cvtd_timestamp02/12/2011 14:57&lt; 1.684363 6890 4884 C (0.12 0.15 0.29 0.27 0.17)  
+##                  382) roll_dumbbell&lt; -1.232234 968  263 C (0.02 0.083 0.73 0.057 0.11) *
+##                  383) roll_dumbbell&gt;=-1.232234 5922 4111 D (0.14 0.16 0.22 0.31 0.18)  
+##                    766) cvtd_timestamp05/12/2011 11:24&gt;=1.610254 551  222 B (0.36 0.6 0.047 0 0) *
+##                    767) cvtd_timestamp05/12/2011 11:24&lt; 1.610254 5371 3560 D (0.11 0.12 0.24 0.34 0.19)  
+##                     1534) cvtd_timestamp30/11/2011 17:11&gt;=1.628995 845  445 C (0.19 0.34 0.47 0 0) *
+##                     1535) cvtd_timestamp30/11/2011 17:11&lt; 1.628995 4526 2715 D (0.099 0.078 0.19 0.4 0.23) *
+##      3) roll_belt&gt;=1.051305 1000    6 E (0.006 0 0 0 0.99) *
+</code></pre>
+
+<div class="highlight highlight-r"><pre><span class="pl-c"># plotting the decision tree</span>
+fancyRpartPlot(<span class="pl-smi">modFit1</span><span class="pl-k">$</span><span class="pl-smi">finalModel</span>, <span class="pl-v">main</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span>Decision Tree Model<span class="pl-pds">"</span></span>)</pre></div>
+
+<p><img src="pml_files/figure-html/create_decision_tree_model-1.png" alt=""> </p>
+
+<h2>
+<a id="cross-validate-decision-tree-model" class="anchor" href="#cross-validate-decision-tree-model" aria-hidden="true"><span class="octicon octicon-link"></span></a>Cross Validate Decision Tree Model</h2>
+
+<p>We then test the Decision Tree Model with the validateTrain dataset.</p>
+
+<div class="highlight highlight-r"><pre><span class="pl-c"># testing the decision tree model on the validation dataset</span>
+<span class="pl-smi">predict1</span> <span class="pl-k">&lt;-</span> predict(<span class="pl-smi">modFit1</span>, <span class="pl-v">newdata</span><span class="pl-k">=</span><span class="pl-smi">validateTrain</span>)
+confusionMatrix(<span class="pl-smi">predict1</span>, <span class="pl-smi">validateTrain</span><span class="pl-k">$</span><span class="pl-smi">classe</span>)</pre></div>
+
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    A    B    C    D    E
+##          A 1686  336   42   46   19
+##          B  143  658   13    0    0
+##          C  127  255  714   32   92
+##          D  268  269  599 1208  694
+##          E    8    0    0    0  637
+## 
+## Overall Statistics
+##                                           
+##                Accuracy : 0.6249          
+##                  95% CI : (0.6141, 0.6356)
+##     No Information Rate : 0.2845          
+##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16       
+##                                           
+##                   Kappa : 0.5294          
+##  Mcnemar's Test P-Value : NA              
+## 
+## Statistics by Class:
+## 
+##                      Class: A Class: B Class: C Class: D Class: E
+## Sensitivity            0.7554  0.43347   0.5219   0.9393  0.44175
+## Specificity            0.9211  0.97535   0.9219   0.7210  0.99875
+## Pos Pred Value         0.7919  0.80835   0.5852   0.3976  0.98760
+## Neg Pred Value         0.9045  0.87770   0.9013   0.9838  0.88821
+## Prevalence             0.2845  0.19347   0.1744   0.1639  0.18379
+## Detection Rate         0.2149  0.08386   0.0910   0.1540  0.08119
+## Detection Prevalence   0.2713  0.10375   0.1555   0.3872  0.08221
+## Balanced Accuracy      0.8382  0.70441   0.7219   0.8302  0.72025
+</code></pre>
+
+<p>The accuracy of the model is only around 62.5%, which is far from ideal.</p>
+
+<h2>
+<a id="create-random-forest-model" class="anchor" href="#create-random-forest-model" aria-hidden="true"><span class="octicon octicon-link"></span></a>Create Random Forest Model</h2>
+
+<p>We now build another model using Random Forest using the same fitTrain dataset.</p>
+
+<div class="highlight highlight-r"><pre><span class="pl-c"># building a random forest model based on the new training dataset</span>
+<span class="pl-smi">modFit2</span> <span class="pl-k">&lt;-</span> train(<span class="pl-smi">fitTrain</span><span class="pl-k">$</span><span class="pl-smi">classe</span> <span class="pl-k">~</span> ., <span class="pl-v">method</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span>rf<span class="pl-pds">"</span></span>, <span class="pl-v">data</span><span class="pl-k">=</span><span class="pl-smi">fitTrain</span>, <span class="pl-v">trControl</span><span class="pl-k">=</span><span class="pl-smi">ctrl</span>, <span class="pl-v">preProcess</span><span class="pl-k">=</span><span class="pl-smi">prep</span>)
+print(<span class="pl-smi">modFit2</span><span class="pl-k">$</span><span class="pl-smi">finalModel</span>)</pre></div>
+
+<pre><code>## 
+## Call:
+##  randomForest(x = x, y = y, mtry = param$mtry) 
+##                Type of random forest: classification
+##                      Number of trees: 500
+## No. of variables tried at each split: 40
+## 
+##         OOB estimate of  error rate: 0.14%
+## Confusion matrix:
+##      A    B    C    D    E  class.error
+## A 3348    0    0    0    0 0.0000000000
+## B    2 2275    2    0    0 0.0017551558
+## C    0    2 2049    3    0 0.0024342746
+## D    0    0    6 1923    1 0.0036269430
+## E    0    0    0    1 2164 0.0004618938
+</code></pre>
+
+<div class="highlight highlight-r"><pre><span class="pl-c"># plotting the random forest</span>
+plot(<span class="pl-smi">modFit2</span><span class="pl-k">$</span><span class="pl-smi">finalModel</span>, <span class="pl-v">main</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span>Random Forest Model<span class="pl-pds">"</span></span>)</pre></div>
+
+<p><img src="pml_files/figure-html/create_random_forest_model-1.png" alt=""> </p>
+
+<h2>
+<a id="cross-validate-random-forest-model" class="anchor" href="#cross-validate-random-forest-model" aria-hidden="true"><span class="octicon octicon-link"></span></a>Cross Validate Random Forest Model</h2>
+
+<p>The Random Forest Model is then checked against the validateTrain dataset.</p>
+
+<div class="highlight highlight-r"><pre><span class="pl-c"># testing the random forest model on the validation dataset</span>
+<span class="pl-smi">predict2</span> <span class="pl-k">&lt;-</span> predict(<span class="pl-smi">modFit2</span>, <span class="pl-v">newdata</span><span class="pl-k">=</span><span class="pl-smi">validateTrain</span>)
+confusionMatrix(<span class="pl-smi">predict2</span>, <span class="pl-smi">validateTrain</span><span class="pl-k">$</span><span class="pl-smi">classe</span>)</pre></div>
+
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    A    B    C    D    E
+##          A 2232    0    0    0    0
+##          B    0 1518    2    0    0
+##          C    0    0 1364    0    0
+##          D    0    0    2 1286    0
+##          E    0    0    0    0 1442
+## 
+## Overall Statistics
+##                                           
+##                Accuracy : 0.9995          
+##                  95% CI : (0.9987, 0.9999)
+##     No Information Rate : 0.2845          
+##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16       
+##                                           
+##                   Kappa : 0.9994          
+##  Mcnemar's Test P-Value : NA              
+## 
+## Statistics by Class:
+## 
+##                      Class: A Class: B Class: C Class: D Class: E
+## Sensitivity            1.0000   1.0000   0.9971   1.0000   1.0000
+## Specificity            1.0000   0.9997   1.0000   0.9997   1.0000
+## Pos Pred Value         1.0000   0.9987   1.0000   0.9984   1.0000
+## Neg Pred Value         1.0000   1.0000   0.9994   1.0000   1.0000
+## Prevalence             0.2845   0.1935   0.1744   0.1639   0.1838
+## Detection Rate         0.2845   0.1935   0.1738   0.1639   0.1838
+## Detection Prevalence   0.2845   0.1937   0.1738   0.1642   0.1838
+## Balanced Accuracy      1.0000   0.9998   0.9985   0.9998   1.0000
+</code></pre>
+
+<p>The accuracy of the model is 99.95%, which is far more superior than the decision tree.  As such we will use this model to make predictions on the testing data.</p>
+
+<h2>
+<a id="predict-using-random-forest-model" class="anchor" href="#predict-using-random-forest-model" aria-hidden="true"><span class="octicon octicon-link"></span></a>Predict Using Random Forest Model</h2>
+
+<p>Since the Random Forest Model has a higher accuracy rate, it will be used to predict the testing dataset.</p>
+
+<div class="highlight highlight-r"><pre><span class="pl-c"># using the random forest model on the testing dataset</span>
+<span class="pl-smi">predictTest</span> <span class="pl-k">&lt;-</span> predict(<span class="pl-smi">modFit2</span>, <span class="pl-v">newdata</span><span class="pl-k">=</span><span class="pl-smi">testing</span>)
+<span class="pl-smi">predictTest</span></pre></div>
+
+<pre><code>##  [1] B A B A A E D B A A B C B A E E A B B B
+## Levels: A B C D E
+</code></pre>
+
+<h2>
+<a id="out-of-sample-error" class="anchor" href="#out-of-sample-error" aria-hidden="true"><span class="octicon octicon-link"></span></a>Out of Sample Error</h2>
+
+<p>Based on the cross validation results earlier, the prediction of classe for the testing dataset is expected to have an out of sample error of 0.05% (1-.9995).</p>
+
+<h3>
+<a id="citations" class="anchor" href="#citations" aria-hidden="true"><span class="octicon octicon-link"></span></a>Citations</h3>
+
+<p>Velloso, E.; Bulling, A.; Gellersen, H.; Ugulino, W.; Fuks, H. Qualitative Activity Recognition of Weight Lifting Exercises. Proceedings of 4th International Conference in Cooperation with SIGCHI (Augmented Human '13) . Stuttgart, Germany: ACM SIGCHI, 2013.</p>
+
+<p>Read more: <a href="http://groupware.les.inf.puc-rio.br/har#ixzz3ixREZXXg">http://groupware.les.inf.puc-rio.br/har#ixzz3ixREZXXg</a></p>
+        </section>
+
+        <aside id="sidebar">
+
+
+          <p>This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the Architect theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.</p>
+        </aside>
+      </div>
+    </div>
+
+  
+  </body>
+</html>
